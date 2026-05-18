@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Happy Graduation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,600&family=Dancing+Script:wght@500;700&family=Great+Vibes&family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/gl-matrix-min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+:root {
+  --ivory: #fffaf4;
+  --cream: #f7efe4;
+  --blush: #f6d5d9;
+  --rose: #e8a0a8;
+  --dusty-rose: #c87080;
+  --plum: #3f2a45;
+  --text: #493747;
+  --muted: #806d7c;
+  --gold: #c9a84c;
+  --sage: #7e9d79;
+  --white: #fff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: Lato, sans-serif; color: var(--text); }
+button, input, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 42px;
+  background: rgba(255,250,244,.86);
+  border-bottom: 1px solid rgba(201,168,76,.24);
+  backdrop-filter: blur(18px);
+  transform: translateY(-100%);
+  transition: transform .55s ease;
+}
+nav.visible { transform: translateY(0); }
+.nav-logo { font-family: "Playfair Display", serif; font-weight: 800; color: var(--dusty-rose); white-space: nowrap; }
+nav ul { display: flex; list-style: none; gap: 20px; flex-wrap: wrap; justify-content: flex-end; }
+nav a {
+  color: var(--muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: .11em;
+  font-size: .68rem;
+  font-weight: 900;
+  opacity: .9;
+}
+nav li.locked a,
+nav li.unrevealed a {
+  opacity: 0;
+  pointer-events: none;
+}
+nav li.active a { color: var(--dusty-rose); }
+
+.section {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 78px 20px 20px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(24px);
+  transition: opacity .55s ease, transform .55s ease;
+  overflow: hidden;
+}
+.section.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.inner { width: min(980px, 100%); text-align: center; position: relative; z-index: 2; }
+.eyebrow {
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: .22em;
+  font-size: .72rem;
+  font-weight: 900;
+  margin-bottom: 14px;
+}
+h1, h2 { font-family: "Playfair Display", serif; color: var(--plum); line-height: 1.05; }
+h1 { font-size: clamp(2.7rem, 8vw, 5.8rem); font-weight: 900; }
+h2 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; }
+h1 span, h2 span { color: var(--dusty-rose); font-style: italic; }
+.sub { color: var(--muted); max-width: 620px; margin: 16px auto 0; line-height: 1.8; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 13px 30px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--dusty-rose), var(--rose));
+  color: white;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: .8rem;
+  box-shadow: 0 12px 34px rgba(200,112,128,.32);
+  transition: transform .2s ease, opacity .2s ease;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn.secondary { background: var(--white); color: var(--dusty-rose); border: 2px solid rgba(200,112,128,.32); box-shadow: none; }
+.btn:disabled { opacity: .42; cursor: default; transform: none; }
+
+#progress {
+  display: none;
+}
+#progress.visible { opacity: 0; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(200,112,128,.22); border: 2px solid rgba(200,112,128,.3); }
+.dot.done { background: rgba(200,112,128,.55); }
+.dot.active { background: var(--dusty-rose); box-shadow: 0 0 0 5px rgba(200,112,128,.16); transform: scale(1.25); }
+
+#start {
+  background: #000;
+  padding: 0;
+}
+#start .start-only {
+  width: 100%;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+}
+#start .btn {
+  background: #fff;
+  color: #000;
+  box-shadow: none;
+  min-width: 154px;
+  min-height: 54px;
+  letter-spacing: .14em;
+}
+
+#radio { background: radial-gradient(circle at top, #fff1f3 0, var(--ivory) 46%, #f6eadf 100%); }
+.radio-card {
+  width: min(560px, 100%);
+  margin: 30px auto 0;
+  padding: 24px;
+  border-radius: 22px;
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(255,255,255,.95);
+  box-shadow: 0 26px 70px rgba(105,70,86,.16);
+}
+.radio-top { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--muted); font-size: .75rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+.light { width: 10px; height: 10px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 16px var(--rose); }
+.radio-hint { margin-top: 16px; color: var(--muted); font-size: .86rem; }
+
+#bloom, #finale { background: radial-gradient(circle at 50% 0, #fde5e9 0, var(--ivory) 58%, #f6eee3 100%); }
+.petals { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.petal { position: absolute; top: -40px; color: rgba(200,112,128,.5); animation: fall linear infinite; font-size: 1.25rem; }
+@keyframes fall {
+  0% { transform: translate3d(0,-40px,0) rotate(0); opacity: 0; }
+  12% { opacity: .8; }
+  100% { transform: translate3d(var(--drift),110vh,0) rotate(520deg); opacity: 0; }
+}
+.lily-stage {
+  width: 280px;
+  height: 330px;
+  margin: 18px auto 8px;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 18px 30px rgba(200,112,128,.22));
+}
+.lily-stage svg { width: 260px; height: 315px; overflow: visible; }
+.stem { stroke-dasharray: 420; stroke-dashoffset: 420; }
+.lily-stage.bloom .stem { animation: growStem 1.1s ease forwards; }
+.lily-stage.bloom svg { animation: sway 4.8s ease-in-out 1.2s infinite; transform-origin: 50% 100%; }
+.lily-stage .petal-shape { opacity: 0; transform-box: fill-box; transform-origin: 50% 100%; transform: scale(.04) rotate(var(--closed)); }
+.lily-stage .petal-shape { cursor: pointer; pointer-events: auto; }
+.lily-stage .petal-shape:hover { filter: brightness(1.04) drop-shadow(0 0 8px rgba(200,112,128,.35)); }
+.lily-stage.bloom .petal-shape { animation: openPetal 1s cubic-bezier(.2,.8,.2,1) forwards; }
+.lily-stage.bloom .p1 { animation-delay: .7s; }
+.lily-stage.bloom .p2 { animation-delay: .9s; }
+.lily-stage.bloom .p3 { animation-delay: 1.05s; }
+.lily-stage.bloom .p4 { animation-delay: 1.2s; }
+.lily-stage.bloom .p5 { animation-delay: 1.35s; }
+.lily-stage.bloom .p6 { animation-delay: 1.5s; }
+@keyframes growStem { to { stroke-dashoffset: 0; } }
+@keyframes openPetal { to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes sway { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+.note {
+  width: min(620px, 100%);
+  margin: 20px auto 0;
+  padding: 28px 32px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.74);
+  border: 1px solid white;
+  box-shadow: 0 22px 60px rgba(90,50,70,.13);
+  text-align: left;
+}
+.note p { font-family: "Playfair Display", serif; font-style: italic; line-height: 1.8; }
+.sig { font-family: "Dancing Script", cursive; color: var(--dusty-rose); font-size: 1.35rem; margin-top: 12px; }
+
+#photo { background: #121016; color: white; padding: 0; }
+.photo-view {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #111;
+}
+#cameraVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+.photo-overlay {
+  position: relative;
+  z-index: 3;
+  width: min(620px, calc(100% - 32px));
+  padding: 34px;
+  border-radius: 18px;
+  background: rgba(30,22,32,.68);
+  border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(18px);
+  text-align: center;
+}
+#photo h2, #photo .eyebrow { color: white; }
+#photo .sub { color: rgba(255,255,255,.72); }
+.countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: none;
+  place-items: center;
+  color: white;
+  background: rgba(0,0,0,.22);
+  font-family: "Playfair Display", serif;
+  font-size: clamp(6rem, 25vw, 15rem);
+  font-weight: 900;
+  text-shadow: 0 18px 50px rgba(0,0,0,.5);
+}
+.flash {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: white;
+  opacity: 0;
+}
+.flash.pop { animation: flash .26s ease; }
+@keyframes flash { 0% { opacity: 0; } 35% { opacity: .95; } 100% { opacity: 0; } }
+.strip-result {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 76px 24px 28px;
+  background: radial-gradient(circle at top, #fff1f4 0, var(--ivory) 56%, #efe4d8 100%);
+  color: var(--text);
+  text-align: center;
+}
+.strip-result.show { display: flex; }
+.strip-result > div {
+  display: grid;
+  justify-items: center;
+  width: min(620px, 100%);
+  margin: 0 auto;
+}
+.polaroid {
+  width: min(340px, 78vw);
+  margin: 0 auto;
+  justify-self: center;
+  background: white;
+  padding: 12px 12px 48px;
+  border-radius: 8px;
+  box-shadow: 0 26px 70px rgba(30,20,28,.28);
+  display: grid;
+  gap: 7px;
+  transform: none;
+}
+.slot { aspect-ratio: 3 / 2; background: #eee; overflow: hidden; border-radius: 4px; }
+.slot img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scaleX(-1); }
+.caption { font-family: "Dancing Script", cursive; color: #777; font-size: 1.2rem; margin-top: -34px; position: relative; }
+.result-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+#cameraCanvas, #downloadCanvas { display: none; }
+
+#letter { background: linear-gradient(180deg, var(--cream), #fff7ef); }
+.envelope { width: 320px; height: 210px; margin: 34px auto 20px; position: relative; cursor: pointer; perspective: 1000px; overflow: visible; }
+.env-body { position: absolute; inset: 0; z-index: 2; border-radius: 6px 6px 14px 14px; background: linear-gradient(145deg, #f5dfbf, #dec08d); overflow: hidden; box-shadow: 0 24px 60px rgba(80,45,60,.18); }
+.env-body:before, .env-body:after { content: ""; position: absolute; bottom: 0; width: 54%; height: 100%; background: rgba(255,255,255,.18); }
+.env-body:before { left: 0; clip-path: polygon(0 0,100% 100%,0 100%); }
+.env-body:after { right: 0; clip-path: polygon(100% 0,0 100%,100% 100%); }
+.flap { position: absolute; inset: 0 0 auto; height: 54%; transform-origin: top center; transition: transform .8s ease; z-index: 3; transform-style: preserve-3d; }
+.flap:before { content: ""; position: absolute; inset: 0; background: linear-gradient(145deg, #efd4ad, #d4ae73); clip-path: polygon(0 0,50% 100%,100% 0); backface-visibility: hidden; }
+.paper-peek { position: absolute; left: 20px; right: 20px; top: 28px; height: 160px; background: white; border-radius: 5px 5px 0 0; display: grid; place-items: center; color: var(--dusty-rose); font-family: "Dancing Script", cursive; transition: transform .8s ease .25s, z-index 0s linear .25s; z-index: 1; box-shadow: 0 -4px 14px rgba(0,0,0,.08); }
+.envelope.open .flap { transform: rotateX(-180deg); }
+.envelope.open .paper-peek { z-index: 3; transform: translateY(-150px); transition: transform .8s ease .25s, z-index 0s linear .25s; }
+
+#album {
+  background: linear-gradient(145deg, #fff8ef 0, #f4e8ed 52%, #f0e8f4 100%);
+}
+#album .inner { width: min(1120px, 100%); margin: 0 auto; }
+
+/* ── Polaroid Slideshow ── */
+.polaroid-show {
+  width: min(980px, 100%);
+  height: min(680px, calc(100vh - 220px));
+  margin: 18px auto 0;
+  position: relative;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.polaroid-slide {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: clamp(320px, 44vw, 560px);
+  background: #fff;
+  padding: 18px 18px 24px;
+  box-shadow: 0 20px 58px rgba(60,30,50,.24), 0 6px 16px rgba(60,30,50,.12);
+  border-radius: 4px;
+  opacity: 0;
+  transform: translate(-50%, -50%) translateX(120%) rotate(12deg) scale(0.88);
+  transition: none;
+  cursor: pointer;
+  will-change: transform, opacity;
+  z-index: 1;
+}
+.polaroid-slide.prev {
+  opacity: 0;
+  transform: translate(-50%, -50%) translateX(-130%) rotate(-14deg) scale(0.82);
+  z-index: 1;
+  transition: transform 0.7s cubic-bezier(.4,0,.2,1), opacity 0.5s ease;
+}
+.polaroid-slide.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(var(--tilt, -2deg)) scale(1);
+  z-index: 10;
+  transition: transform 0.7s cubic-bezier(.4,0,.2,1), opacity 0.6s ease;
+}
+.polaroid-slide.next {
+  opacity: 0.18;
+  transform: translate(-50%, -50%) translateX(110%) rotate(10deg) scale(0.88);
+  z-index: 2;
+  transition: transform 0.7s cubic-bezier(.4,0,.2,1), opacity 0.5s ease;
+}
+.polaroid-slide.entering {
+  opacity: 0;
+  transform: translate(-50%, -50%) translateX(130%) rotate(14deg) scale(0.84);
+  transition: none;
+}
+.polaroid-img {
+  width: 100%;
+  aspect-ratio: 9 / 11;
+  background:
+    linear-gradient(135deg, rgba(200,112,128,.14) 0 50%, rgba(201,168,76,.12) 50%),
+    repeating-linear-gradient(45deg, rgba(200,112,128,.1) 0 8px, rgba(201,168,76,.09) 8px 16px);
+  overflow: hidden;
+  display: block;
+}
+.polaroid-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Centered caption below slideshow */
+.pol-caption-display {
+  text-align: center;
+  margin-top: 18px;
+  min-height: 52px;
+}
+.pol-caption-display .pol-year {
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--rose);
+  display: block;
+  margin-bottom: 4px;
+  transition: opacity .4s ease;
+}
+.pol-caption-display .pol-title {
+  font-family: "Dancing Script", cursive;
+  color: var(--plum);
+  font-size: 1.4rem;
+  line-height: 1.3;
+  display: block;
+  transition: opacity .4s ease;
+}
+.pol-caption-display.fade {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.pol-caption-display {
+  transition: opacity .35s ease, transform .35s ease;
+}
+/* Nav arrows */
+.pol-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.9);
+  border: 2px solid rgba(200,112,128,.24);
+  color: var(--dusty-rose);
+  font-weight: 900;
+  font-size: 1.1rem;
+  box-shadow: 0 8px 24px rgba(60,30,50,.14);
+  cursor: pointer;
+  transition: transform .2s ease, background .2s ease;
+  display: flex; align-items: center; justify-content: center;
+}
+.pol-arrow:hover { transform: translateY(-50%) scale(1.1); background: #fff; }
+.pol-arrow.left { left: 0; }
+.pol-arrow.right { right: 0; }
+/* Dots */
+.pol-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+.pol-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(200,112,128,.25);
+  border: 1.5px solid rgba(200,112,128,.4);
+  transition: background .3s ease, transform .3s ease;
+  cursor: pointer;
+}
+.pol-dot.active { background: var(--dusty-rose); transform: scale(1.35); }
+.album-note {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: .88rem;
+}
+.album-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 6000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: rgba(42,25,40,.72);
+  backdrop-filter: blur(12px);
+}
+.album-lightbox.show { display: flex; }
+.album-lightbox-card {
+  width: min(540px, 92vw);
+  min-height: min(620px, 78vh);
+  border: 14px solid #fff;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.78), rgba(255,255,255,.32)),
+    repeating-linear-gradient(45deg, rgba(200,112,128,.16) 0 12px, rgba(201,168,76,.14) 12px 24px);
+  box-shadow: 0 34px 90px rgba(0,0,0,.38);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 24px;
+}
+.album-lightbox-card.has-copy {
+  display: grid;
+  grid-template-rows: minmax(260px, 1fr) auto;
+  gap: 18px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.album-lightbox-card img {
+  width: 100%;
+  height: 100%;
+  max-height: 58vh;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
+}
+.album-lightbox-message {
+  text-align: center;
+  color: var(--text);
+}
+.album-lightbox-message h3 {
+  font-family: "Playfair Display", serif;
+  color: var(--plum);
+  font-size: 1.65rem;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.album-lightbox-message p {
+  color: var(--muted);
+  font-size: .95rem;
+  font-weight: 400;
+  line-height: 1.7;
+}
+.album-lightbox-close {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  z-index: 6001;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--dusty-rose);
+  font-weight: 900;
+  box-shadow: 0 12px 32px rgba(0,0,0,.22);
+}
+.letter-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(50,30,48,.66);
+  backdrop-filter: blur(12px);
+}
+.letter-modal.show { display: flex; }
+.letter-paper {
+  width: min(900px, calc(100vw - 48px));
+  max-height: min(760px, calc(100vh - 64px));
+  overflow: auto;
+  padding: 56px;
+  background: #fffffb;
+  border-radius: 8px;
+  box-shadow: 0 34px 90px rgba(0,0,0,.35);
+  text-align: left;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(200,170,210,.22) 31px, rgba(200,170,210,.22) 32px);
+  background-position: 0 42px;
+  margin: auto;
+  position: relative;
+}
+.letter-paper h3 { font-family: "Great Vibes", cursive; color: var(--dusty-rose); font-size: 2.2rem; margin-bottom: 14px; }
+.letter-paper p { font-family: "Dancing Script", cursive; font-size: 1.28rem; line-height: 2; margin-bottom: 16px; }
+.close { position: fixed; top: 22px; right: 22px; z-index: 5001; width: 44px; height: 44px; border-radius: 50%; background: white; color: var(--dusty-rose); font-weight: 900; box-shadow: 0 12px 32px rgba(0,0,0,.2); }
+
+#verse {
+  background: radial-gradient(circle at 50% 0, #fff5ee 0, #f7efe4 48%, #f1e8f4 100%);
+}
+.verse-card {
+  width: min(760px, 100%);
+  margin: 28px auto 0;
+  padding: 44px 48px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(255,255,255,.95);
+  box-shadow: 0 26px 70px rgba(90,50,70,.14);
+  text-align: center;
+  position: relative;
+}
+.verse-card:before,
+.verse-card:after {
+  content: "";
+  position: absolute;
+  left: 48px;
+  right: 48px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,.6), transparent);
+}
+.verse-card:before { top: 24px; }
+.verse-card:after { bottom: 24px; }
+.verse-text {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-style: italic;
+  line-height: 1.75;
+  color: var(--plum);
+}
+.verse-ref {
+  margin-top: 18px;
+  color: var(--gold);
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  font-weight: 900;
+}
+.verse-dedication {
+  width: min(560px, 100%);
+  margin: 22px auto 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+#capsule { background: radial-gradient(circle at 50% 0, #fff3f5 0, var(--cream) 48%, #f1e8f4 100%); }
+#capsule .inner { width: min(1160px, 100%); }
+.vault-shell {
+  width: min(1040px, 100%);
+  margin: 22px auto 0;
+  display: block;
+  text-align: left;
+}
+.vault-editor-wrap {
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(255,255,255,.95);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(90,50,70,.13);
+}
+.vault-panel-title {
+  font-family: "Playfair Display", serif;
+  color: var(--plum);
+  font-size: 1.35rem;
+  margin-bottom: 6px;
+}
+.vault-editor-wrap {
+  padding: 24px;
+  min-height: 610px;
+}
+.vault-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+.vault-meta {
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.7;
+  text-align: right;
+}
+.vault-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0 16px;
+}
+.tool-select,
+.tool-input {
+  width: auto;
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(201,168,76,.3);
+  background: rgba(255,255,255,.9);
+  color: var(--text);
+  font-size: .82rem;
+  font-family: Lato, sans-serif;
+}
+.color-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px rgba(120,90,100,.18);
+  cursor: pointer;
+}
+.color-dot.active { box-shadow: 0 0 0 3px rgba(200,112,128,.28); }
+.vault-sticker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(201,168,76,.24);
+  color: var(--dusty-rose);
+  font-weight: 900;
+  cursor: pointer;
+}
+.letter-paper-editor {
+  min-height: 390px;
+  padding: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(201,168,76,.24);
+  background: #fffaf1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 16px 40px rgba(90,50,70,.08);
+  background-image:
+    linear-gradient(rgba(255,255,255,.56), rgba(255,255,255,.56)),
+    repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(200,170,210,.16) 31px, rgba(200,170,210,.16) 32px);
+}
+.letter-paper-editor.theme-aged { background-color: #fff3df; }
+.letter-paper-editor.theme-notebook {
+  background-color: #fffdf8;
+  background-image:
+    linear-gradient(90deg, rgba(200,112,128,.2) 0 2px, transparent 2px),
+    repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(120,150,190,.18) 29px, rgba(120,150,190,.18) 30px);
+  background-position: 34px 0, 0 0;
+}
+.letter-paper-editor.theme-postcard {
+  background-color: #fff8ee;
+  background-image: radial-gradient(circle at 86% 18%, rgba(201,168,76,.18) 0 34px, transparent 35px);
+}
+.vault-title-input {
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  padding: 0 0 14px;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.55rem, 4vw, 2.5rem);
+  color: var(--plum);
+  width: 100%;
+}
+.vault-body {
+  min-height: 285px;
+  outline: none;
+  color: var(--text);
+  font-family: "Dancing Script", cursive;
+  font-size: 1.28rem;
+  line-height: 1.85;
+}
+.vault-body:empty:before {
+  content: attr(data-placeholder);
+  color: rgba(122,106,120,.55);
+}
+.font-hand .vault-body { font-family: "Dancing Script", cursive; }
+.font-serif .vault-body { font-family: "Playfair Display", serif; font-size: 1.05rem; }
+.font-type .vault-body { font-family: "Courier New", monospace; font-size: .98rem; line-height: 1.75; }
+.vault-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  align-items: center;
+}
+.vault-status {
+  min-height: 20px;
+  color: var(--muted);
+  font-size: .85rem;
+  margin-top: 10px;
+}
+.vault-status.saved { color: var(--sage); font-weight: 900; }
+.vault-status.error { color: var(--dusty-rose); font-weight: 900; }
+.label { display: block; color: var(--gold); font-size: .68rem; text-transform: uppercase; letter-spacing: .16em; font-weight: 900; margin: 0 0 8px; }
+input, textarea {
+  width: 100%;
+  border: 2px solid rgba(201,168,76,.25);
+  background: rgba(255,255,255,.92);
+  border-radius: 12px;
+  padding: 13px 16px;
+  color: var(--text);
+  outline: none;
+}
+textarea { min-height: 180px; resize: vertical; font-family: "Dancing Script", cursive; font-size: 1.1rem; line-height: 1.7; }
+input:focus, textarea:focus { border-color: var(--dusty-rose); }
+.field { margin-bottom: 16px; }
+
+#messages { background: linear-gradient(140deg, #fff4e8, #f0e8f4); }
+#messages .inner { width: min(1140px, 100%); }
+.openwhen-grid {
+  width: min(980px, 100%);
+  margin: 28px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  justify-content: center;
+  gap: 18px;
+}
+.openwhen-envelope {
+  min-height: 190px;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #f7dfbd 0%, #e5c18e 100%);
+  border: 1px solid rgba(160,110,60,.24);
+  box-shadow: 0 18px 46px rgba(90,50,70,.14);
+  position: relative;
+  overflow: hidden;
+  padding: 22px 16px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--plum);
+  font-family: "Playfair Display", serif;
+  font-weight: 900;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: transform .24s ease, box-shadow .24s ease;
+}
+.openwhen-envelope:hover { transform: translateY(-4px); box-shadow: 0 24px 60px rgba(90,50,70,.2); }
+.openwhen-envelope:before,
+.openwhen-envelope:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.16);
+  pointer-events: none;
+}
+.openwhen-envelope:before { clip-path: polygon(0 0, 50% 54%, 100% 0); }
+.openwhen-envelope:after { clip-path: polygon(0 100%, 50% 46%, 100% 100%); }
+.openwhen-envelope span { position: relative; z-index: 2; }
+.message-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 6100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(50,30,48,.62);
+  backdrop-filter: blur(12px);
+}
+.message-modal.show { display: flex; }
+.message-card {
+  width: min(560px, 92vw);
+  padding: 38px;
+  border-radius: 14px;
+  background: #fffffb;
+  box-shadow: 0 34px 90px rgba(0,0,0,.32);
+  border: 1px solid rgba(255,255,255,.95);
+  text-align: center;
+}
+.message-card h3 {
+  font-family: "Playfair Display", serif;
+  color: var(--plum);
+  font-size: clamp(1.7rem, 5vw, 2.6rem);
+  margin-bottom: 14px;
+}
+.message-card p {
+  color: var(--text);
+  line-height: 1.85;
+  font-family: "Playfair Display", serif;
+  font-style: italic;
+}
+.message-close {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  z-index: 6101;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: white;
+  color: var(--dusty-rose);
+  font-weight: 900;
+  box-shadow: 0 12px 32px rgba(0,0,0,.22);
+}
+.board {
+  width: min(1120px, 100%);
+  margin: 24px auto 0;
+  padding: 34px;
+  border-radius: 18px;
+  background: #efd8b7;
+  border: 6px solid #c99f61;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,.12), 0 18px 50px rgba(90,50,70,.11);
+}
+.notes { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 20px; overflow: visible; }
+.postit { min-height: 156px; padding: 20px 18px 40px; background: #fffde7; border-radius: 5px; box-shadow: 4px 5px 15px rgba(0,0,0,.16); position: relative; text-align: left; font-family: "Dancing Script", cursive; font-size: 1.08rem; line-height: 1.45; }
+.postit:before { content: ""; position: absolute; top: -7px; left: 50%; width: 16px; height: 16px; transform: translateX(-50%); border-radius: 50%; background: var(--dusty-rose); box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.author { position: absolute; right: 12px; bottom: 10px; color: var(--muted); font-size: .88rem; }
+
+#finale .final-card {
+  width: min(620px, 100%);
+  margin: 26px auto 0;
+  padding: 32px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.74);
+  border: 1px solid white;
+  box-shadow: 0 24px 60px rgba(90,50,70,.13);
+}
+.final-card p { font-family: "Playfair Display", serif; font-style: italic; line-height: 1.8; margin-bottom: 10px; }
+
+@media (max-width: 760px) {
+  nav { padding: 11px 14px; align-items: flex-start; }
+  nav ul { gap: 9px; }
+  nav a { font-size: .58rem; }
+  .section { padding-inline: 18px; }
+  .note, .letter-paper, .verse-card { padding: 24px; }
+  .vault-shell { max-height: 72vh; overflow: auto; }
+  .vault-editor-wrap { min-height: auto; }
+  .vault-header { flex-direction: column; }
+  .vault-meta { text-align: left; }
+  .openwhen-grid { grid-template-columns: 1fr; gap: 12px; max-height: 52vh; overflow: auto; padding-right: 4px; }
+  .infinite-menu { height: 430px; }
+  .infinite-title, .infinite-desc { display: none; }
+  .notes { grid-template-columns: 1fr; gap: 14px; }
+  .postit { min-height: auto; }
+  #progress { display: none; }
+}
+</style>
+</head>
+<body>
+<nav id="nav">
+  <div class="nav-logo">A Website For Rah 😁😁😁</div>
+  <ul id="navList"></ul>
+</nav>
+<div id="progress"></div>
+
+<section class="section active" id="start">
+  <div class="start-only">
+    <button class="btn" id="startDone">Start</button>
+  </div>
+</section>
+
+<section class="section" id="radio">
+  <div class="inner">
+    <h1>Set the <span>Song</span></h1>
+    <div class="radio-card">
+      <div class="radio-top"><span class="light"></span><span>Graduation Mix</span></div>
+     <iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/playlist/3sEyYVmQ8GI2a50Yyf1Rg4?utm_source=generator&theme=0" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    </div>
+    <button class="btn" id="radioDone" style="margin-top:18px;">Ano Tara?</button>
+  </div>
+</section>
+
+<section class="section" id="bloom">
+  <div class="petals" id="bloomPetals"></div>
+  <div class="inner">
+    <p class="eyebrow"></p>
+    <h1>Congratulations, <span>Rah</span></h1>
+    <div class="lily-stage" id="lily">
+      <svg viewBox="0 0 220 310" aria-hidden="true">
+        <path class="stem" d="M108 292 C105 252 112 220 110 186 C108 154 105 138 110 118" fill="none" stroke="#6f916e" stroke-width="5" stroke-linecap="round"/>
+        <ellipse cx="89" cy="222" rx="28" ry="9" fill="#8eaf82" transform="rotate(-34 89 222)"/>
+        <ellipse cx="128" cy="238" rx="25" ry="8" fill="#789d73" transform="rotate(28 128 238)"/>
+        <g transform="translate(110 118)">
+          <path class="petal-shape p1" data-title="How You Make Me Feel" data-message="Your like the sunlight that sneaks through the window in the morning. Lam mo yon,you just show up and everything suddenly feels better." style="--closed:-8deg" d="M0 10 C-13 -28 -10 -78 0 -108 C12 -78 14 -28 0 10Z" fill="#fff9fb" stroke="#edb4c0" stroke-width="2"/>
+          <path class="petal-shape p2" data-title="How I See You Rah" data-message="Papahiram ko sayo ang aking dalawang mata para malaman mo kung paano kita nakikita, Upang makita mo ang hiwaga na meron ka. And only then would you have realized how special you are to me" style="--closed:-54deg" d="M-1 8 C24 -32 56 -58 92 -68 C80 -28 43 1 -1 8Z" fill="#f8d8df" stroke="#eaa5b2" stroke-width="2"/>
+          <path class="petal-shape p3" data-title="Dont Ever Forget To Choose Yourself" data-message="Always choose yourself Rah, gawin mo ung mga bagay na nagpapasaya sayo. Continue to love and continue to be happy palagii" style="--closed:54deg" d="M1 8 C-24 -32 -56 -58 -92 -68 C-80 -28 -43 1 1 8Z" fill="#fbe1e6" stroke="#eaa5b2" stroke-width="2"/>
+          <path class="petal-shape p4" data-title="Dont Ever Forget How Great of a Person You Are Rah" data-message="You are more than enough at sobra-sobra pa. Araw-Araw,Gabi-Gabi,Minuminuto at Kailan pa Man" style="--closed:-34deg" d="M0 8 C35 0 70 14 94 46 C52 51 19 31 0 8Z" fill="#f3b8c4" stroke="#df8fa0" stroke-width="2"/>
+          <path class="petal-shape p5" data-title="Take Life One Step At A Time" data-message="You do not have to become everything at once. Blooming is still blooming, even when it is slow.There is so much life ahead of you, and I hope you meet it knowing you are deeply loved." style="--closed:34deg" d="M0 8 C-35 0 -70 14 -94 46 C-52 51 -19 31 0 8Z" fill="#f5c2cc" stroke="#df8fa0" stroke-width="2"/>
+          <path class="petal-shape p6" data-title="Never Stop Blooming" data-message="May you never stop blooming, Rah. Keep growing, keep shining, and keep being the amazing person you are.Never lose the drive to pursue the thing you love no matter how hard it getss." style="--closed:0deg" d="M0 12 C-17 -17 -28 -58 -25 -88 C1 -64 20 -20 0 12Z" fill="#fff0f4" stroke="#efb8c2" stroke-width="2"/>
+          <line x1="0" y1="10" x2="0" y2="-22" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="10" x2="11" y2="-18" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="10" x2="-11" y2="-18" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="0" cy="-23" r="4" fill="#d3a43a"/>
+          <circle cx="11" cy="-18" r="3.5" fill="#d3a43a"/>
+          <circle cx="-11" cy="-18" r="3.5" fill="#d3a43a"/>
+          <circle cx="0" cy="10" r="10" fill="#f0c85c"/>
+        </g>
+      </svg>
+    </div>
+    <div class="note">
+      <p>I just want to say na im so incredibly proud of you. I may not have been there throughout your years in school, but seeing you officially finish your school years is such a big moment and hindi lang yon dahil nakatapos ka na sa school, but because of all the hard work and sacrifices you made to get you to where you are today. The diploma isn't just a piece of paper, but a symbol of the wonderful person you became.</p>
+      <p class="sig">Congratulationsss Rah 😁😁😁</p>
+    </div>
+    <button class="btn" id="bloomDone" style="margin-top:22px;">Continue</button>
+  </div>
+</section>
+
+<section class="section" id="photo">
+  <div class="photo-view">
+    <video id="cameraVideo" autoplay playsinline muted></video>
+    <canvas id="cameraCanvas"></canvas>
+    <div class="flash" id="flash"></div>
+    <div class="countdown" id="countdown">3</div>
+    <div class="photo-overlay" id="photoIntro">
+      <p class="eyebrow">Photobooth</p>
+      <h2>Three Photos</h2>
+      <p class="sub">Paki Ready na ung Camera mo ah 😁</p>
+      <button class="btn" id="startBooth" style="margin-top:24px;">Start Camera</button>
+    </div>
+    <div class="strip-result" id="stripResult">
+      <div>
+        <p class="eyebrow">Your Graduation Strip</p>
+        <div class="polaroid" id="polaroid">
+          <div class="slot" id="slot0"></div>
+          <div class="slot" id="slot1"></div>
+          <div class="slot" id="slot2"></div>
+          <div class="caption"></div>
+        </div>
+        <div class="result-actions">
+          <button class="btn secondary" id="retakePhotos">Retake</button>
+          <button class="btn secondary" id="downloadStrip">Download</button>
+          <button class="btn" id="photoDone">Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="album">
+  <div class="inner">
+    <p class="eyebrow">Photo Album</p>
+    <h2>Moments Of <span>Rah</span></h2>
+    <p class="sub"></p>
+    <div class="polaroid-show" id="polaroidShow">
+      <button class="pol-arrow left" id="polPrev">&#8592;</button>
+      <div id="polaroidStage"></div>
+      <button class="pol-arrow right" id="polNext">&#8594;</button>
+    </div>
+    <div class="pol-caption-display" id="polCaption">
+      <span class="pol-year" id="polCaptionYear"></span>
+      <span class="pol-title" id="polCaptionTitle"></span>
+    </div>
+    <div class="pol-dots" id="polDots"></div>
+    <button class="btn" id="albumDone" style="margin-top:22px;">Continue</button>
+  </div>
+</section>
+
+<div class="album-lightbox" id="albumLightbox">
+  <button class="album-lightbox-close" id="albumLightboxClose">X</button>
+  <div class="album-lightbox-card" id="albumLightboxCard"></div>
+</div>
+
+<section class="section" id="letter">
+  <div class="inner">
+    <p class="eyebrow">A Letter For You</p>
+    <h2>Open The Letter</h2>
+    <p class="sub">Tap the envelope.</p>
+    <div class="envelope" id="envelope">
+      <div class="paper-peek">To my Dearest Rah</div>
+      <div class="env-body"></div>
+      <div class="flap"></div>
+    </div>
+    <button class="btn" id="letterDone" disabled>Continue</button>
+  </div>
+</section>
+<div class="letter-modal" id="letterModal">
+  <button class="close" id="closeLetter">X</button>
+  <div class="letter-paper">
+    <h3>To My Dearest Rah,</h3>
+    <p>So here we are, Congratulations Rah. Im beyond proud of you, alam mo ba yon? Goodluck to the next chapter of your life. Imagine mo yon? Your one step closer to your dreams. Ung pangarap mo na CPA lawyer na nagtrtrabaho sa U.N. Ngayon palang I can already imagine you living your dreams. Alam ko naman na mararating mo yon, Ikaw pa! As I keep telling you, the world is not ready for someone as great as you Rah.</p>
+    <p>Kahit ano man maging path mo patungo sa goal mo, mararating at mararating mo yon. Ganon na pagkakakilala ko sayo ih. One of if not the most caring,genuine,hardworking and wonderful people i know. Im so proud of you and forever will be, syempre pinagdadasal ko narin na magtagumpay ka sa lahat ng aspeto sa buhay and syempre dont forget to pray din palagi. Gusto kita makita sa itaas ah at sabay pa natin tututparin lahat ng pangarap natin.</p>
+    <p>You truly deserve every blessing. But Rah Kahit purihin kita 24/7, kilala kita. Ik your going to try and downplay this.. kaya wag mo na subukan. Pero Kahit gaano ka kabait, the world always has its ways to test you. Kaya always remember na Kahit ano man ibato  satin ng mundo, malalagpasan natin yan. When the world feels heavy, remember na hindi mo naman kailangan dalhin magisa yan, theres so many people that love and care for you and isa naarin ako doon. Ung kakampi mo habang buhay.</p>
+    <p>The one that will clap for you when the world doesn't, and the one that says congrats silently each time I see you and your achievments. Anyways, Congratulations ulit Rah. Ill always be rooting for you.</p>
+    <p class="sig">-Your Kakampi Habang Buhay</p>
+  </div>
+</div>
+
+<section class="section" id="verse">
+  <div class="inner">
+    <p class="eyebrow">A Verse For Rah</p>
+    <h2>A Promise To <span>Carry</span></h2>
+    <p class="sub">A Bible verse dedicated to you Rah </p>
+    <div class="verse-card">
+      <p class="verse-text">"For I know the plans I have for you," declares the Lord, "plans to prosper you and not to harm you, plans to give you hope and a future."</p>
+      <p class="verse-ref">Jeremiah 29:11</p>
+    </div>
+    <p class="verse-dedication">Sana this can be a reminder for us to never lose sight of the hope and future that God has for us.</p>
+    <button class="btn" id="verseDone" style="margin-top:24px;">Continue</button>
+  </div>
+</section>
+
+<section class="section" id="capsule">
+  <div class="inner">
+    <p class="eyebrow">Letters to Tomorrow</p>
+    <h2>Write Today. <span>Read Tomorrow.</span></h2>
+    <p class="sub">A quiet letter vault for memories, prayers, goals, and messages to your future self.</p>
+
+    <div class="vault-shell">
+      <div class="vault-editor-wrap">
+        <div class="vault-header">
+          <div>
+            <p class="vault-panel-title">Letter Canvas</p>
+            <p class="sub" style="margin:0;max-width:520px;">Make it feel like a page from an old memory box.</p>
+          </div>
+          <div class="vault-meta">
+            <div id="vaultCreated">Created today</div>
+            <div id="vaultWordCount">0 words</div>
+          </div>
+        </div>
+
+        <div class="vault-tools">
+          <select class="tool-select" id="vaultFont">
+            <option value="hand">Handwritten</option>
+            <option value="serif">Serif</option>
+            <option value="type">Typewriter</option>
+          </select>
+          <select class="tool-select" id="vaultTheme">
+            <option value="aged">Aged Paper</option>
+            <option value="notebook">Notebook</option>
+            <option value="postcard">Postcard</option>
+          </select>
+          <input class="tool-input" id="vaultFutureDate" type="date" title="Open in future date" />
+          <button class="vault-sticker" data-sticker="*" title="Add stamp">*</button>
+          <button class="color-dot active" data-color="#493747" style="background:#493747" title="Plum ink"></button>
+          <button class="color-dot" data-color="#fffaf4" style="background:#fffaf4" title="Ivory ink"></button>
+          <button class="color-dot" data-color="#f7efe4" style="background:#f7efe4" title="Cream ink"></button>
+          <button class="color-dot" data-color="#f6d5d9" style="background:#f6d5d9" title="Blush ink"></button>
+          <button class="color-dot" data-color="#e8a0a8" style="background:#e8a0a8" title="Rose ink"></button>
+          <button class="color-dot" data-color="#c87080" style="background:#c87080" title="Rose ink"></button>
+          <button class="color-dot" data-color="#3f2a45" style="background:#3f2a45" title="Plum ink"></button>
+          <button class="color-dot" data-color="#806d7c" style="background:#806d7c" title="Muted ink"></button>
+          <button class="color-dot" data-color="#c9a84c" style="background:#c9a84c" title="Gold ink"></button>
+          <button class="color-dot" data-color="#7e9d79" style="background:#7e9d79" title="Sage ink"></button>
+          <button class="color-dot" data-color="#ffffff" style="background:#ffffff" title="White ink"></button>
+        </div>
+
+        <div class="letter-paper-editor theme-aged font-hand" id="vaultPaper">
+          <input class="vault-title-input" id="vaultTitle" placeholder="Letter title" />
+          <div class="vault-body" id="vaultBody" contenteditable="true" data-placeholder="Dear future me..."></div>
+        </div>
+
+        <div class="vault-actions">
+          <button class="btn" id="vaultSave">Save Letter</button>
+          <button class="btn secondary" id="vaultDownload">Download Picture</button>
+          <button class="btn secondary" id="vaultNew">Edit New</button>
+          <button class="btn" id="capsuleDone" disabled>Continue</button>
+        </div>
+        <p class="vault-status" id="vaultStatus">Auto-save is ready.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="messages">
+  <div class="inner">
+    <p class="eyebrow">Open When</p>
+    <h2>Little Letters For Rah <span>Later</span></h2>
+    <p class="sub">Buksan mo when you need it</p>
+    <div class="openwhen-grid">
+      <button class="openwhen-envelope" data-title="Open when you need Reassureance" data-message="
+Rahh, if you’re reading this right now edi baka pangit araw mo? Maybe napapagod ka, maybe things aren’t going the way you planned, maybe you’re doubting yourself a little… or maybe a lot. And if that’s the case, then I just wanted to write this letter for you exactly when you need it most. 😙 Una sa lahat… breathe muna okay? Dahan dahan lang. Hindi mo kailangan mafigure out lahat ngayon, hindi mo kailangan maging okay agad, at lalong hindi mo kailangan dalhin lahat mag-isa. Okay lang mapagod Rah, okay lang umiyak, okay lang matakot, okay lang mag overthink minsam.Tao ka eh ganon tlga yon. And your feelings will always be valid, nobody can take that away from you. Habang binabasa mo toh gusto ko itatak sa utak na, Your Doing Soo Gooddd
+
+I know minsan hindi mo nakikita yon sa sarili mo. Minsan sobrang harsh mo sa sarili mo and nakakalimutan mo kung gaano kalayo na pala narating mo. Yung mga bagay na akala mo maliit lang, hindi sila maliit. The way you make other smile and laugh, the way your care for others and yung mga simple remarks that makes other peoles day. All of that matters and It all counts. And if ever dumating yung araw na questionin mo yung worth mo… please, please don’t. Kasi if only you could see yourself through my eyes… grabe Rah. You’d see someone na sobrang kind, sobrang genuine, sobrang strong kahit minsan hindi mo napapansin. Someone na kayang magbigay comfort without even trying and someone na kayang magpagaan ng araw ng ibang tao just by just being there. 
+
+And please don’t ever think na behind? Hindi karera ang buhay. Hindi dahil may mga taong nauuna means nahuhuli ka. You are exactly where you’re meant to be. God is not rushing your story, so don’t rush yourself din. Sabi nga sa Proverbs 16:9, *In their hearts humans plan their course, but the LORD establishes their steps.. May purpose lahat ng pinagdadaanan mo ngayon, even the confusing parts.
+
+So kapag napapagod ka, magpahinga ka.
+If you feel lost then pray.
+Kapag naiiyak,iiyak mo lang yan.
+Kapag nakakalimutan mo kung gaano ka ka-special,Comeback here. Comeback to this.Comeback to me 😙
+
+I’ll always believe in you… even on the days na nahihirapan kang maniwala sa sarili mo."><span>Open when you need Reassureance</span></button>
+      <button class="openwhen-envelope" data-title="Open when you Doubt Yourself" data-message="Rahh, if you’re reading this right now.then maybe isa ito sa mga araw na medyo minamaliit mo sarili mo. Maybe you’re questioning if you’re good enough, if kaya mo ba talaga, if you’re doing enough, or maybe napapagod ka na kakaisip ng mga bagay na hindi pa nangyayari. And if that’s the case… then I hope this letter finds you exactly when you need it. Una sa lahat,please be gentle with yourself okay? Kasi alam mo Rah, Kilang kilala kita.Sobrang taas ng standards mo sa sarili mo. You work hard, you care deeply, you always want to do things right and sometimes dahil doon, nakakalimutan mo na tao ka rin. Remember na its okay to be tired. Its okay to make mistakes. Okay lang kung hindi mo alam lahat. Pero sana may isang bagay kang hinding hinding makalimutan…
+
+The World is not ready for someone as Great as you Rah
+
+Hindi mo man laging nakikita, pero grabe yung lakas na meron ka. The kind of strength na hindi maingay. Yung strength na bumabangon kahit pagod. Yung strength na tumatawa kahit may iniisip. Yung strength na nagpapatuloy kahit may takot. And honestly Rah, thats so admirable kasi ako nahihirapan din ako dyan. Look at everything you’ve survived already. Look at all the days where you were so tiredd. pero nandito ka pa rin. Lumalaban. Ngumingiti. At nagpapasaya pa ng iba. And that alone says so much about who you are.
+Because when I look at you, I don’t see someone who’s failing. I don’t see someone who’s behind. I see someone brave,Someone kind.,Someone genuine,Someone with a heart so beautiful it changes the people around her.,Someone who’s going to do amazing things not “someday,” but because she already is.
+
+So please Rah… Wag na wag mong minamaliit sarili mo. At hindi rin naman siguro ako nagkulang sa papaalala ko sayo yon. But on the days na wala talaga I’ll believe in you enough for the both of us. "><span>Open when you Doubt Yourself</span></button>
+
+      <button class="openwhen-envelope" data-title="Open when you need to Smile" data-message="Rahhh, if you’re opening this.then either medyo badtrip ka, pagod ka, stressed ka, or baka namimiss mo lang yung mga moments na napapangiti ka nang walang dahilan. Or… baka curious ka lang at makulit ka talaga noh? 😁😙 Either way, I’m glad you opened this.
+
+First things First, Ngiti ka munaa at picturan mo.
+
+Alam mo Rah, One of my favorite things ko about youis how effortless mo pasayahin yung mga tao sa paligid mo without even realizing it. Yung simpleng banat mo, yung random mong expressions, yung mga mala sound board mo na effects, yung pagkwento mo na may matching pang hingang malalamin lahat yon, ewan ko ba, napapangiti nalang ako.
+
+And since kailangan mo ng smile right now… let me remind you of a few things. 😙
+
+Remember yung mga random tawanan natin na halos wala nang sense yung pinag uusapan pero tawang tawa parin tayo?
+Remember yung mga times na sobrang seryoso mong magkwento tapos bigla kang may sasabihin na super randomm?
+Remember yung mga oras na pinagtatawanan moko
+And syempre kakalimutan ko pa ba ung duck lips before ka ngumiti. oo napapansin ko yon. 😁
+
+And just in case walang nagsasabi sayo today.You make life feel lighter. You make ordinary moments feel special. And your smile… grabe Rah, ang daming kayang ayusin niyan.
+
+So whatever happened today, Kung kanino o saan ka man nastress or whatever made you overthink.For now, pahinga muna okay?
+
+Inom ka tubig, Ml ka saglit, Buksan mo yung Spotify natin. And if hindi ka pa rin napapangiti hanggang ngayon
+
+Fine… isipin mo nalang ako. Sa pogi at baet kong toh, hindi ka pa ba mapapangiti😁😙
+
+Ayoh oh, thats Better.
+
+Keep that smile okay Rah… bagay na bagay sayo."><span>Open when you need to smile</span></button>
+
+    </div>
+    <button class="btn" id="messagesDone" style="margin-top:20px;">Paano ba yan last part na toh 😔</button>
+  </div>
+</section>
+
+<div class="message-modal" id="messageModal">
+  <button class="message-close" id="messageClose">X</button>
+  <div class="message-card">
+    <h3 id="messageTitle"></h3>
+    <p id="messageText"></p>
+  </div>
+</div>
+
+<section class="section" id="finale">
+  <div class="petals" id="finalePetals"></div>
+  <div class="inner">
+    <h1>You Did It, <span>Rah</span></h1>
+    <p class="sub"></p>
+    <div class="final-card">
+      <p>In case I dont say it enough... Im Proud of you Rah, im rooting for you palagi. Thank you for being such an amazing person.</p>
+      <p>Im right behind you to cheer you on and pray for your success. May God always guide and bless us</p>
+      <p class="sig">-Your Kakampi Habang Buhay</p>
+    </div>
+    <button class="btn secondary" id="restart" style="margin-top:24px;">Revisit From the Beginning</button>
+  </div>
+</section>
+
+<canvas id="downloadCanvas"></canvas>
+
+<script>
+const steps = [
+  { id: "start", label: "Start" },
+  { id: "radio", label: "Music" },
+  { id: "bloom", label: "Bloom" },
+  { id: "photo", label: "Photos" },
+  { id: "album", label: "Album" },
+  { id: "letter", label: "Letter" },
+  { id: "verse", label: "Verse" },
+  { id: "capsule", label: "Letters" },
+  { id: "messages", label: "Messages" },
+  { id: "finale", label: "Finale" }
+];
+
+let currentStep = 0;
+let highestUnlocked = 0;
+const completedSteps = new Set();
+const nav = document.getElementById("nav");
+const navList = document.getElementById("navList");
+const progress = document.getElementById("progress");
+
+steps.forEach((step, index) => {
+  const li = document.createElement("li");
+  li.className = "locked";
+  li.innerHTML = `<a href="#">${step.label}</a>`;
+  li.addEventListener("click", event => {
+    event.preventDefault();
+    if (index <= highestUnlocked) goTo(index);
+  });
+  navList.appendChild(li);
+
+  const dot = document.createElement("div");
+  dot.className = "dot";
+  progress.appendChild(dot);
+});
+
+function completeStep(index) {
+  completedSteps.add(index);
+  highestUnlocked = Math.max(highestUnlocked, index + 1);
+  goTo(index + 1);
+}
+
+function goTo(index) {
+  if (index < 0 || index >= steps.length || index > highestUnlocked) return;
+  document.getElementById(steps[currentStep].id).classList.remove("active");
+  currentStep = index;
+  document.getElementById(steps[currentStep].id).classList.add("active");
+  updateChrome();
+  if (steps[index].id === "bloom") startBloom();
+  if (steps[index].id === "finale") startFinale();
+}
+
+function updateChrome() {
+  nav.classList.toggle("visible", highestUnlocked > 0 && currentStep > 0);
+  progress.classList.toggle("visible", highestUnlocked > 0 && currentStep > 0);
+  [...navList.children].forEach((li, index) => {
+    li.classList.toggle("locked", index > highestUnlocked);
+    li.classList.toggle("unrevealed", !completedSteps.has(index));
+    li.classList.toggle("active", index === currentStep);
+  });
+  [...progress.children].forEach((dot, index) => {
+    dot.className = "dot";
+    if (index < currentStep) dot.classList.add("done");
+    if (index === currentStep) dot.classList.add("active");
+  });
+}
+
+function makePetals(target, count) {
+  const el = document.getElementById(target);
+  el.innerHTML = "";
+  const marks = ["*", "+", "✦", "✧"];
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement("div");
+    p.className = "petal";
+    p.textContent = marks[Math.floor(Math.random() * marks.length)];
+    p.style.left = Math.random() * 100 + "%";
+    p.style.setProperty("--drift", (Math.random() * 180 - 90) + "px");
+    p.style.animationDuration = 7 + Math.random() * 8 + "s";
+    p.style.animationDelay = Math.random() * 5 + "s";
+    el.appendChild(p);
+  }
+}
+
+function startBloom() {
+  makePetals("bloomPetals", 18);
+  const lily = document.getElementById("lily");
+  lily.classList.remove("bloom");
+  void lily.offsetWidth;
+  lily.classList.add("bloom");
+}
+
+(function messagePopups() {
+  const modal = document.getElementById("messageModal");
+  const title = document.getElementById("messageTitle");
+  const text = document.getElementById("messageText");
+  const close = document.getElementById("messageClose");
+
+  function openMessage(source) {
+    title.textContent = source.dataset.title || "A note for you";
+    text.textContent = source.dataset.message || "";
+    modal.classList.add("show");
+  }
+
+  document.querySelectorAll(".petal-shape, .openwhen-envelope").forEach(item => {
+    item.addEventListener("click", event => {
+      event.stopPropagation();
+      openMessage(item);
+    });
+  });
+
+  close.addEventListener("click", () => modal.classList.remove("show"));
+  modal.addEventListener("click", event => {
+    if (event.target === modal) modal.classList.remove("show");
+  });
+})();
+
+document.getElementById("startDone").addEventListener("click", () => completeStep(0));
+document.getElementById("radioDone").addEventListener("click", () => completeStep(1));
+document.getElementById("bloomDone").addEventListener("click", () => completeStep(2));
+document.getElementById("albumDone").addEventListener("click", () => completeStep(4));
+document.getElementById("verseDone").addEventListener("click", () => completeStep(6));
+
+(function polaroidSlideshow() {
+  const items = [
+    { image: "1.jpg",  title: "Tadhana",       year: "",        description: "Dont Ever Forget na You are So much More Capabale Than You Think You Aree. God Put Those Dreams In Your Heart For a Reason" },
+    { image: "2.jpg",  title: "Ngiti",     year: "",        description: "Dont Forget To Always Smile Rah, Mas Bagay Sayo Ganon ☺️" },
+    { image: "3.jpg",  title: "Aphrodite",    year: "",         description: "May You Never Lose This Side Of You Rah, The Side That Brightens Up a Whole Room Pagkapasok and Projects that Joyful Attitude Sa Iba" },
+    { image: "4.jpg",  title: "Ikaw Lang Patutunguhan",  year: "",        description: "I Hope You Never Lose The Spark You Have In Your Eyess. May You Keep Choosing Softness in a World That Can Be So Harsh and Keep Loving Yourself with same Love You Give the World" },
+    { image: "5.jpg",  title: "The Archer",           year: "",         description: "Never Forget You Feelings Are Always Valid. Wag kang Matatak ipakita ung Nararamdaman mo. You're not Sensitive. You're not Being Dramatic. You Have Every Right to Feel What Your Feel and No One Can Take That Away From You. At talagang may pa chocker pa siya 😁" },
+    { image: "6.jpg",  title: "Kabisado",     year: "",         description: "Please Dont Ever Put Yourself Down Rah. Your an Amazing Person and Dont Ever Forget That. Lagi mo Tatandaan na There is Always a Rainbow After the Storm. Kaya When Life Tries to Test you, Dont ever Let It Bring You Down" },
+    { image: "7.jpg",  title: "Toronto 2014",          year: "",     description: "Sana Always Remeber to Enjoy Life. Look at the Sunset and See How Beautiful It Is. Remember How Nice It Feels To Laugh. Always Remember Why you Love What You Love. Sana You Always Keep in Mind How Beautiful Life is and How Beautiful It Is With You In It" },
+    { image: "8.jpg",  title: "Devotion",          year: "",     description: "In a world Filled With These Wonderful Things and Moments. Wag na Wag mong Kakalimutan That You Are One of Them. It is Normal to Feel Small But I want You to Recognize You Have Your Strengts Too.In A World With 8.3 Billion People, You are One of A Kind. Your Are Special. You Are You. And Never Stop Being You" },
+    { image: "9.jpg",  title: "All I Need To Hear",             year: "", description: "May God Always Take Care Of That Wonderful Smile. Dont Ever Let the World Change That Smile Rah. But on the Days Where It Seems Hard too, May You Always Find Your Way Back to Smiling The Way You do. Yung may pa Slight singkit pa, Ung Slight Turn Ng Ulo, Konting Ngiti Tapos Duck Lips Pagkatapos." },
+    { image: "10.jpg", title: "Darating Din",       year: "",           description: "You Will Succceed In Life. No Matter What and Kahit Gaano pa Kahirap Ung Jounery mo Doon, Maligaw Man and Landas mo Dont Ever Forget Where Your Supposed To be. Keep Believing,Stay Focused and Lagi Tandaan Than You Are So Much Stronger Than You Think" },
+    { image: "11.jpg", title: "You're Gonna Live Forever In Me",       year: "",  description: "This is Just a Reminder na You are Still so Young and You Have so Much of Life Ahead Of You.Experience,Explore,Enjoy. The Purpose of Live was never Permanence, But Presence - To be here, now, with all that we are" },
+    { image: "12.jpg", title: "Reality",       year: "",    description: "I Hope One Fay We Both Each Get The Future We Talked and Prayed About. I Pray na You Will And I Know You Will. Ill be Waiting For you To Be Successful at Mag MMatcha Tasting Pa Tayo Sa Japan" },
+    { image: "13.jpg", title: "Ikaw ang aking Mahal",       year: "",    description: "Baka Iniisip mo sa Sarili mo. Bakit ito Napili niyang Picture? Eh paborito ko toh bakit ba. Mahal Kita, Mas Mahal Kita Ngayon Kesa Kahapon, Ngunit Mas Mahal Kita Bukas Kesa Ngayon. And if Someday Life Feels Uncertain, Come Back To This. Because There Will Always Be Someone Who Believes In You, Even on The Days You Forget To Believe In Yourself." }
+  ];
+
+  const tilts = [-3, 2, -1.5, 3, -2.5, 1, -3.5, 2.5, -1, 3, -2, 1.5, -3];
+  const stage      = document.getElementById("polaroidStage");
+  const dotsWrap   = document.getElementById("polDots");
+  const prevBtn    = document.getElementById("polPrev");
+  const nextBtn    = document.getElementById("polNext");
+  const captionEl  = document.getElementById("polCaption");
+  const captionYear  = document.getElementById("polCaptionYear");
+  const captionTitle = document.getElementById("polCaptionTitle");
+  const lightbox   = document.getElementById("albumLightbox");
+  const lightboxCard = document.getElementById("albumLightboxCard");
+  const lightboxClose = document.getElementById("albumLightboxClose");
+
+  let current = 0;
+  let animating = false;
+  let autoTimer = null;
+
+  // Build slides (no caption inside polaroid)
+  const slides = items.map((item, i) => {
+    const el = document.createElement("div");
+    el.className = "polaroid-slide";
+    el.style.setProperty("--tilt", (tilts[i % tilts.length]) + "deg");
+    el.innerHTML = `<div class="polaroid-img">${item.image ? `<img src="${item.image}" alt="${item.title}" loading="lazy">` : ""}</div>`;
+    el.addEventListener("click", () => openAlbumLightbox(item));
+    stage.appendChild(el);
+    return el;
+  });
+
+  // Build dots
+  const dots = items.map((_, i) => {
+    const d = document.createElement("button");
+    d.className = "pol-dot" + (i === 0 ? " active" : "");
+    d.setAttribute("aria-label", `Photo ${i + 1}`);
+    d.addEventListener("click", () => goTo(i));
+    dotsWrap.appendChild(d);
+    return d;
+  });
+
+  function applyState() {
+    slides.forEach((slide, i) => {
+      slide.classList.remove("active", "prev", "next", "entering");
+      const offset = ((i - current) + items.length) % items.length;
+      if (offset === 0)                     slide.classList.add("active");
+      else if (offset === items.length - 1) slide.classList.add("prev");
+      else if (offset === 1)                slide.classList.add("next");
+    });
+    dots.forEach((d, i) => d.classList.toggle("active", i === current));
+    // Update centered caption with fade
+    captionEl.classList.add("fade");
+    setTimeout(() => {
+      captionYear.textContent  = items[current].year;
+      captionTitle.textContent = items[current].title;
+      captionEl.classList.remove("fade");
+    }, 260);
+  }
+
+  function goTo(index, dir) {
+    if (animating || index === current) return;
+    animating = true;
+    resetAuto();
+    current = (index + items.length) % items.length;
+    applyState();
+    setTimeout(() => { animating = false; }, 720);
+  }
+
+  prevBtn.addEventListener("click", () => goTo(current - 1, -1));
+  nextBtn.addEventListener("click", () => goTo(current + 1,  1));
+
+  // Swipe support
+  let touchStartX = 0;
+  stage.parentElement.addEventListener("touchstart", e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  stage.parentElement.addEventListener("touchend", e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) goTo(dx < 0 ? current + 1 : current - 1);
+  }, { passive: true });
+
+  lightboxClose.addEventListener("click", () => lightbox.classList.remove("show"));
+  lightbox.addEventListener("click", e => { if (e.target === lightbox) lightbox.classList.remove("show"); });
+
+  function openAlbumLightbox(item) {
+    lightboxCard.classList.add("has-copy");
+    lightboxCard.innerHTML = `
+      <div>${item.image ? `<img src="${item.image}" alt="${item.title}">` : `${item.year}<br>${item.title}`}</div>
+      <div class="album-lightbox-message">
+        <h3>${item.title}</h3>
+        <p>${item.description}</p>
+      </div>`;
+    lightbox.classList.add("show");
+  }
+
+  function resetAuto() {
+    clearInterval(autoTimer);
+    autoTimer = setInterval(() => goTo(current + 1), 3800);
+  }
+
+  applyState();
+  resetAuto();
+})();
+
+(function booth() {
+  const video = document.getElementById("cameraVideo");
+  const canvas = document.getElementById("cameraCanvas");
+  const ctx = canvas.getContext("2d");
+  const intro = document.getElementById("photoIntro");
+  const countdown = document.getElementById("countdown");
+  const result = document.getElementById("stripResult");
+  const flash = document.getElementById("flash");
+  const photos = [];
+  let stream = null;
+
+  document.getElementById("startBooth").addEventListener("click", start);
+  document.getElementById("retakePhotos").addEventListener("click", retake);
+  document.getElementById("photoDone").addEventListener("click", () => completeStep(3));
+  document.getElementById("downloadStrip").addEventListener("click", download);
+
+  async function start() {
+    try {
+      photos.length = 0;
+      result.classList.remove("show");
+      intro.style.display = "none";
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      video.srcObject = stream;
+      await video.play();
+      setTimeout(runSequence, 800);
+    } catch (err) {
+      intro.style.display = "block";
+      intro.querySelector(".sub").textContent = "Camera access is needed for this step. Please allow camera permissions and try again.";
+    }
+  }
+
+  async function runSequence() {
+    for (let i = 0; i < 3; i++) {
+      await count();
+      snap();
+      await wait(550);
+    }
+    stopCamera();
+    showStrip();
+  }
+
+  function count() {
+    countdown.style.display = "grid";
+    let n = 3;
+    countdown.textContent = n;
+    return new Promise(resolve => {
+      const timer = setInterval(() => {
+        n--;
+        if (n === 0) {
+          clearInterval(timer);
+          countdown.textContent = "";
+          countdown.style.display = "none";
+          resolve();
+        } else {
+          countdown.textContent = n;
+        }
+      }, 850);
+    });
+  }
+
+  function snap() {
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    photos.push(canvas.toDataURL("image/jpeg", .92));
+    flash.classList.remove("pop");
+    void flash.offsetWidth;
+    flash.classList.add("pop");
+  }
+
+  function showStrip() {
+    photos.forEach((src, index) => {
+      const slot = document.getElementById("slot" + index);
+      slot.innerHTML = "";
+      const img = new Image();
+      img.src = src;
+      slot.appendChild(img);
+    });
+    result.classList.add("show");
+  }
+
+  function retake() {
+    result.classList.remove("show");
+    intro.style.display = "grid";
+    start();
+  }
+
+  function stopCamera() {
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    stream = null;
+  }
+
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function download() {
+    if (photos.length < 3) return;
+    const dc = document.getElementById("downloadCanvas");
+    const dctx = dc.getContext("2d");
+    const width = 420;
+    const pad = 18;
+    const gap = 8;
+    const slotH = 238;
+    const captionH = 58;
+    dc.width = width;
+    dc.height = pad * 2 + slotH * 3 + gap * 2 + captionH;
+    dctx.fillStyle = "#fff";
+    dctx.fillRect(0, 0, dc.width, dc.height);
+
+    Promise.all(photos.map(src => new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.src = src;
+    }))).then(images => {
+      images.forEach((img, index) => {
+        const y = pad + index * (slotH + gap);
+        const drawW = width - pad * 2;
+        const drawH = slotH;
+        const targetAspect = drawW / drawH;
+        const sourceAspect = img.width / img.height;
+        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+        if (sourceAspect > targetAspect) {
+          sw = img.height * targetAspect;
+          sx = (img.width - sw) / 2;
+        } else {
+          sh = img.width / targetAspect;
+          sy = (img.height - sh) / 2;
+        }
+        dctx.save();
+        dctx.translate(width - pad, y);
+        dctx.scale(-1, 1);
+        dctx.drawImage(img, sx, sy, sw, sh, 0, 0, drawW, drawH);
+        dctx.restore();
+      });
+      dctx.fillStyle = "#777";
+      dctx.font = "28px Dancing Script, cursive";
+      dctx.textAlign = "center";
+      dctx.fillText("Graduation Day 2025", width / 2, dc.height - 20);
+      const link = document.createElement("a");
+      link.download = "graduation-polaroid-strip.png";
+      link.href = dc.toDataURL("image/png");
+      link.click();
+    });
+  }
+})();
+
+(function letter() {
+  const envelope = document.getElementById("envelope");
+  const modal = document.getElementById("letterModal");
+  const done = document.getElementById("letterDone");
+  envelope.addEventListener("click", () => {
+    envelope.classList.add("open");
+    setTimeout(() => modal.classList.add("show"), 650);
+  });
+  document.getElementById("closeLetter").addEventListener("click", () => {
+    modal.classList.remove("show");
+    done.disabled = false;
+  });
+  modal.addEventListener("click", event => {
+    if (event.target === modal) document.getElementById("closeLetter").click();
+  });
+  done.addEventListener("click", () => completeStep(5));
+})();
+
+(function lettersToTomorrow() {
+  const DRAFT_KEY = "letters_to_tomorrow_draft";
+  const LETTER_KEY = "letters_to_tomorrow_single";
+  const paper = document.getElementById("vaultPaper");
+  const title = document.getElementById("vaultTitle");
+  const body = document.getElementById("vaultBody");
+  const font = document.getElementById("vaultFont");
+  const theme = document.getElementById("vaultTheme");
+  const futureDate = document.getElementById("vaultFutureDate");
+  const wordCount = document.getElementById("vaultWordCount");
+  const created = document.getElementById("vaultCreated");
+  const status = document.getElementById("vaultStatus");
+  const saveBtn = document.getElementById("vaultSave");
+  const downloadBtn = document.getElementById("vaultDownload");
+  const newBtn = document.getElementById("vaultNew");
+  const done = document.getElementById("capsuleDone");
+  let draftTimer;
+
+  function getEditorState() {
+    return {
+      title: title.value.trim() || "Untitled Letter",
+      body: body.innerHTML,
+      plain: body.textContent.trim(),
+      font: font.value,
+      theme: theme.value,
+      color: body.style.color || "#493747",
+      futureDate: futureDate.value,
+      createdAt: JSON.parse(localStorage.getItem(LETTER_KEY) || "null")?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  function applyStyle() {
+    paper.classList.remove("font-hand", "font-serif", "font-type", "theme-aged", "theme-notebook", "theme-postcard");
+    paper.classList.add(`font-${font.value}`, `theme-${theme.value}`);
+  }
+
+  function updateMeta() {
+    const words = body.textContent.trim().split(/\s+/).filter(Boolean).length;
+    wordCount.textContent = `${words} word${words === 1 ? "" : "s"}`;
+    const saved = JSON.parse(localStorage.getItem(LETTER_KEY) || "null");
+    created.textContent = saved?.createdAt ? `Created ${new Date(saved.createdAt).toLocaleDateString()}` : `Created ${new Date().toLocaleDateString()}`;
+  }
+
+  function saveDraft() {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(() => {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(getEditorState()));
+      status.textContent = "Draft auto-saved.";
+      status.className = "vault-status";
+    }, 350);
+  }
+
+  function saveLetter() {
+    const record = getEditorState();
+    if (!record.plain) {
+      body.focus();
+      status.textContent = "Write a little something before saving.";
+      status.className = "vault-status";
+      return;
+    }
+
+    localStorage.setItem(LETTER_KEY, JSON.stringify(record));
+    localStorage.removeItem(DRAFT_KEY);
+    status.textContent = "Letter saved.";
+    status.className = "vault-status saved";
+    done.disabled = false;
+  }
+
+  async function downloadLetterImage() {
+    if (typeof html2canvas === "undefined") {
+      status.textContent = "Image download is still loading. Try again in a moment.";
+      status.className = "vault-status error";
+      return;
+    }
+    status.textContent = "Preparing picture...";
+    status.className = "vault-status";
+    try {
+      const canvas = await html2canvas(paper, {
+        backgroundColor: null,
+        scale: Math.min(2, window.devicePixelRatio || 1)
+      });
+      const link = document.createElement("a");
+      link.download = `${(title.value.trim() || "letter-to-tomorrow").replace(/[^\w-]+/g, "-").toLowerCase()}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      status.textContent = "Letter picture downloaded.";
+      status.className = "vault-status saved";
+    } catch (error) {
+      status.textContent = "Could not download the letter picture.";
+      status.className = "vault-status error";
+      console.error(error);
+    }
+  }
+
+  function newLetter() {
+    title.value = "";
+    body.innerHTML = "";
+    font.value = "hand";
+    theme.value = "aged";
+    futureDate.value = "";
+    body.style.color = "#493747";
+    applyStyle();
+    updateMeta();
+    status.textContent = "Fresh page ready.";
+  }
+
+  function insertSticker(value) {
+    body.focus();
+    document.execCommand("insertText", false, ` ${value} `);
+    updateMeta();
+    saveDraft();
+  }
+
+  document.querySelectorAll(".color-dot").forEach(dot => {
+    dot.addEventListener("click", () => {
+      document.querySelectorAll(".color-dot").forEach(item => item.classList.remove("active"));
+      dot.classList.add("active");
+      body.style.color = dot.dataset.color;
+      saveDraft();
+    });
+  });
+
+  document.querySelectorAll(".vault-sticker").forEach(button => button.addEventListener("click", () => insertSticker(button.dataset.sticker)));
+
+  [title, body, futureDate].forEach(el => {
+    el.addEventListener("input", () => {
+      updateMeta();
+      saveDraft();
+    });
+  });
+  [font, theme].forEach(el => {
+    el.addEventListener("change", () => {
+      applyStyle();
+      saveDraft();
+    });
+  });
+  saveBtn.addEventListener("click", saveLetter);
+  downloadBtn.addEventListener("click", downloadLetterImage);
+  newBtn.addEventListener("click", newLetter);
+  done.addEventListener("click", () => completeStep(7));
+
+  const savedOrDraft = localStorage.getItem(DRAFT_KEY) || localStorage.getItem(LETTER_KEY);
+  if (savedOrDraft) {
+    try {
+      const parsed = JSON.parse(savedOrDraft);
+      title.value = parsed.title === "Untitled Letter" ? "" : parsed.title || "";
+      body.innerHTML = parsed.body || "";
+      font.value = parsed.font || "hand";
+      theme.value = parsed.theme || "aged";
+      futureDate.value = parsed.futureDate || "";
+      body.style.color = parsed.color || "#493747";
+    } catch {}
+  }
+  applyStyle();
+  updateMeta();
+})();
+
+(function messages() {
+  document.getElementById("messagesDone").addEventListener("click", () => completeStep(8));
+})();
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
+}
+
+function startFinale() {
+  makePetals("finalePetals", 24);
+  if (typeof confetti === "function") {
+    const colors = ["#f6d5d9", "#e8a0a8", "#c9a84c", "#7e9d79", "#d8c9ef"];
+    confetti({ particleCount: 90, spread: 80, origin: { x: .2, y: .55 }, colors });
+    confetti({ particleCount: 90, spread: 80, origin: { x: .8, y: .55 }, colors });
+  }
+}
+
+document.getElementById("restart").addEventListener("click", () => goTo(0));
+updateChrome();
+</script>
+</body>
+</html>
